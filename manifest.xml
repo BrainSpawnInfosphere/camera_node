@@ -1,0 +1,22 @@
+<package>
+  <description brief="camera_node">
+
+     camera_node using OpenCV to access cameras
+
+  </description>
+  <author>Kevin Walchko</author>
+  <license>BSD</license>
+  <review status="unreviewed" notes=""/>
+  <url>http://ros.org/wiki/camera_node</url>
+  <depend package="sensor_msgs"/>
+  <depend package="opencv2"/>
+  <depend package="cv_bridge"/>
+  <depend package="roscpp"/>
+  <depend package="std_msgs"/>
+  <depend package="image_transport"/>
+  <depend package="camera_info_manager"/>
+  <depend package="nodelet"/>
+
+</package>
+
+
