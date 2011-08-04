@@ -34,3 +34,6 @@ rosbuild_add_executable(filter src/filter.cpp )
 target_link_libraries(filter opencv_core)
 
 rosbuild_add_executable(opencv_cam src/opencv_cam.cpp )
+rosbuild_add_executable(calibrate src/calibrate.cpp src/CameraCalibrator.cpp)
+
+
