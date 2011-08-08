@@ -1,30 +1,28 @@
 #include <ros/ros.h>
-#include "sensor_msgs/Image.h"
-#include "image_transport/image_transport.h" // handles raw or compressed images
-#include "cv_bridge/CvBridge.h"
+#include <sensor_msgs/Image.h>
+#include <image_transport/image_transport.h> // handles raw or compressed images
+#include <cv_bridge/CvBridge.h>
 #include <opencv/cv.h>
 #include <opencv/highgui.h>
 
-#include "GraphUtils.h"
 
-
-class ImageConverter {
+class Filter {
 	
 public:
 	
-	ImageConverter(ros::NodeHandle &n) :
+	Filter(ros::NodeHandle &n) :
 	n_(n), it_(n_)
 	{
 		image_pub_ = it_.advertise("image",1);
 		
 		cvNamedWindow("Image window");
-		image_sub_ = it_.subscribe("axis_camera", 1, &ImageConverter::imageCallback, this, image_transport::TransportHints("compressed"));
-		//image_sub_ = it_.subscribeCamera("axis_camera", 1, &ImageConverter::imageCallback, this);
+		image_sub_ = it_.subscribe("axis_camera", 1, &Filter::imageCallback, this, image_transport::TransportHints("compressed"));
+		//image_sub_ = it_.subscribeCamera("axis_camera", 1, &Filter::imageCallback, this);
 		
 		
 	}
 	
-	~ImageConverter()
+	~Filter()
 	{
 		cvDestroyWindow("Image window");
 	}
@@ -76,7 +74,7 @@ int main(int argc, char** argv)
 {
 	ros::init(argc, argv, "camera_node");
 	ros::NodeHandle n;
-	ImageConverter ic(n);
+	Filter filter(n);
 	ros::spin();
 	return 0;
 }

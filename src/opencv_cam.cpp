@@ -86,15 +86,16 @@ class CameraNode {
 public:
 	
 	CameraNode(ros::NodeHandle &n) :
-	node(n), transport(node), info_mgr(node), fpsUpdate(30*5)
+            transport(node), info_mgr(node), node(n), fpsUpdate(30*5)
 	{
 		// the only way i have figured out how to clean up is to delete the 
 		// params, otherwise they are always there or need to kill roscore
-		node.param<bool>("debug",debug, true);		node.deleteParam("debug");
+		node.param<bool>("debug",debug, false);		node.deleteParam("debug");
 		node.param("source",source, 0);	node.deleteParam("source");
 		//node.param("width",width, 320);	node.deleteParam("width");
 		//node.param("height",height, 240); node.deleteParam("height");
         node.param<double>("fps",fps, 30.0);	node.deleteParam("fps"); // doesn't work
+        hertzLoop = fps;
         
         std::string res;
         node.param<std::string>("size",res, "320x240");	node.deleteParam("size");
@@ -178,7 +179,7 @@ public:
             
 			// if subscribers, pub images
 			// there is no easy way to send cv::Mat, so convert to IplImage
-			if(/*image_pub.getNumSubscribers() > 0*/ 1){
+			if(image_pub.getNumSubscribers() > 0){
                 
                 ros::Time time = ros::Time::now();
                 
@@ -239,7 +240,7 @@ public:
 	 */
 	void spin(void){
 		
-		ros::Rate r( 30 ); // spin at 30 Hz
+		ros::Rate r( hertzLoop ); // spin
 		
 		while(node.ok()){
 			imageCallback();
@@ -268,6 +269,7 @@ protected:
 	int width;	// image width/cols
 	int height;	// image height/rows
 	double fps;		// frame rate
+    double hertzLoop;
 	
     cv::Mat cv_image;	// image from camera
     unsigned int frameCount;
