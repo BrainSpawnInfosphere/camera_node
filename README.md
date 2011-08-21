@@ -14,15 +14,15 @@ Simple generic camera driver using OpenCV to grab images.
 
 	rosrun camera_node opencv_cam _source:=# _size:=#x# _debug:=true/false
  
-*debug: true or false
- *source: > 0 selects a camera other than default
- *size: my MacBook Pro can do 160x120, 320x240, 640x480
- *fps: my MacBook Pro seems to ignore fps and always gives me ~15 fps
+* debug: true or false
+* source: > 0 selects a camera other than default
+* size: my MacBook Pro can do 160x120, 320x240, 640x480
+* fps: my MacBook Pro seems to ignore fps and always gives me ~15 fps
 
 ### Published Topics: 
 **Image:** "/opencv_cam/camera"
  
- ### Example:
+### Example:
  	rosrun camera_node opencv_cam _debug:=true _size:=160x120 _fps:=30
 
 ## To Do
