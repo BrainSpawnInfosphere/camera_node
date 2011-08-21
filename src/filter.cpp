@@ -2,22 +2,26 @@
 #include <sensor_msgs/Image.h>
 #include <image_transport/image_transport.h> // handles raw or compressed images
 #include <cv_bridge/CvBridge.h>
-#include <opencv/cv.h>
-#include <opencv/highgui.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <cv_bridge/cv_bridge.h>
 
+#include <sstream>
 
 class Filter {
 	
 public:
 	
 	Filter(ros::NodeHandle &n) :
-	n_(n), it_(n_)
+	node(n), transport(n)
 	{
-		image_pub_ = it_.advertise("image",1);
+    debug = true;
+    
+		image_pub = transport.advertise("image",1);
 		
-		cvNamedWindow("Image window");
-		image_sub_ = it_.subscribe("axis_camera", 1, &Filter::imageCallback, this, image_transport::TransportHints("compressed"));
-		//image_sub_ = it_.subscribeCamera("axis_camera", 1, &Filter::imageCallback, this);
+    cv::namedWindow("Debug",1);
+		image_sub = transport.subscribe("opencv_cam/camera", 1, &Filter::imageCallback, this, image_transport::TransportHints("compressed"));
+		//image_sub = transport.subscribeCamera("axis_camera", 1, &Filter::imageCallback, this);
 		
 		
 	}
@@ -26,16 +30,19 @@ public:
 	{
 		cvDestroyWindow("Image window");
 	}
+  
+  inline bool getDebug(void) const { return debug; }
 	
 	//void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr,
 	//						 const sensor_msgs::CameraInfoConstPtr& info_msg)
-	void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr)
+	void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	{
 		
-		IplImage *cv_image = NULL;
+    cv_bridge::CvImagePtr cv_msg;
+    
 		try
 		{
-			cv_image = bridge_.imgMsgToCv(msg_ptr, "bgr8");
+			cv_msg = cv_bridge::toCvCopy(msg, "bgr8");
 		}
 		catch (sensor_msgs::CvBridgeException& error)
 		{
@@ -43,15 +50,26 @@ public:
 			return;
 		}
 		
-#if 0
-		// display window showing results
-		cvShowImage("Image window", cv_image);
-		//cvWaitKey(3);		
-#endif
+    // display image if in debug mode
+    if(getDebug()){
+      imshow("Debug",cv_msg->image);
+      int key = cv::waitKey(100);
+      if(key == 's'){
+        static int picNum = 0;
+        std::stringstream ss;
+        ss << picNum++;
+        imwrite("image_" + ss.str() + ".jpg",cv_msg->image);
+        ROS_INFO("Saved image");
+      }
+    }
 		
 		try
 		{
-			image_pub_.publish(bridge_.cvToImgMsg(cv_image, "bgr8"));
+      
+      //ros::Time time = ros::Time::now();
+      
+      // convert OpenCV image to ROS message
+			image_pub.publish(cv_msg->toImageMsg());
 		}
 		catch (sensor_msgs::CvBridgeException error)
 		{
@@ -62,17 +80,18 @@ public:
 		
 protected:
 	
-	ros::NodeHandle n_;
-	image_transport::ImageTransport it_;
-	image_transport::Subscriber image_sub_;
-	sensor_msgs::CvBridge bridge_;
-	image_transport::Publisher image_pub_;
+	ros::NodeHandle node;
+	image_transport::ImageTransport transport;
+	image_transport::Subscriber image_sub;
+	//sensor_msgs::CvBridge bridge;
+	image_transport::Publisher image_pub;
 	
+  bool debug;
 };
 
 int main(int argc, char** argv)
 {
-	ros::init(argc, argv, "camera_node");
+	ros::init(argc, argv, "filter");
 	ros::NodeHandle n;
 	Filter filter(n);
 	ros::spin();
