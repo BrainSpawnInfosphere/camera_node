@@ -36,8 +36,8 @@ rosbuild_add_executable(opencv_cam src/opencv_cam.cpp )
 
 rosbuild_add_executable(calibrate src/calibrate.cpp)
 
-rosbuild_add_executable(hist1 src/hist/histogram.cpp)
+#rosbuild_add_executable(hist1 src/hist/histogram.cpp)
 
-rosbuild_add_executable(hist2 src/hist/hist.cpp)
+#rosbuild_add_executable(hist2 src/hist/hist.cpp)
 
 
