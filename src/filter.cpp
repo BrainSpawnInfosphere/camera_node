@@ -8,6 +8,10 @@
 
 #include <sstream>
 
+
+#include "featuretracker.h"
+
+
 class Filter {
 	
 public:
@@ -15,11 +19,15 @@ public:
 	Filter(ros::NodeHandle &n) :
 	node(n), transport(n)
 	{
-    debug = true;
-    
+		debug = true;
+		filter = NULL;
+		
+		filter = new FeatureTracker();
+		
 		image_pub = transport.advertise("image",1);
 		
-    cv::namedWindow("Debug",1);
+		cv::namedWindow("Debug",1);
+		cv::namedWindow("Filter",1);
 		image_sub = transport.subscribe("opencv_cam/camera", 1, &Filter::imageCallback, this, image_transport::TransportHints("compressed"));
 		//image_sub = transport.subscribeCamera("axis_camera", 1, &Filter::imageCallback, this);
 		
@@ -30,16 +38,29 @@ public:
 	{
 		cvDestroyWindow("Image window");
 	}
-  
-  inline bool getDebug(void) const { return debug; }
+	
+	/**
+	 * Add a simple filter to the video path ... maybe do a vector<FrameFilter*>
+	 * of them?
+	 */
+	bool setFilter(FrameFilter* f){
+		bool ret = false;
+		if(f){
+			ret = true;
+			filter = f;
+		}
+		return ret;
+	}
+	
+	inline bool getDebug(void) const { return debug; }
 	
 	//void imageCallback(const sensor_msgs::ImageConstPtr& msg_ptr,
 	//						 const sensor_msgs::CameraInfoConstPtr& info_msg)
 	void imageCallback(const sensor_msgs::ImageConstPtr& msg)
 	{
 		
-    cv_bridge::CvImagePtr cv_msg;
-    
+		cv_bridge::CvImagePtr cv_msg;
+		
 		try
 		{
 			cv_msg = cv_bridge::toCvCopy(msg, "bgr8");
@@ -50,25 +71,31 @@ public:
 			return;
 		}
 		
-    // display image if in debug mode
-    if(getDebug()){
-      imshow("Debug",cv_msg->image);
-      int key = cv::waitKey(100);
-      if(key == 's'){
-        static int picNum = 0;
-        std::stringstream ss;
-        ss << picNum++;
-        imwrite("image_" + ss.str() + ".jpg",cv_msg->image);
-        ROS_INFO("Saved image");
-      }
-    }
+		if(filter){
+			cv::Mat image;
+			filter->process(cv_msg->image,image);
+			if(getDebug()) imshow("Filter",image);
+		}
+		
+		// display image if in debug mode
+		if(getDebug()){
+			imshow("Debug",cv_msg->image);
+			int key = cv::waitKey(100);
+			if(key == 's'){
+				static int picNum = 0;
+				std::stringstream ss;
+				ss << picNum++;
+				imwrite("image_" + ss.str() + ".jpg",cv_msg->image);
+				ROS_INFO("Saved image");
+			}
+		}
 		
 		try
 		{
-      
-      //ros::Time time = ros::Time::now();
-      
-      // convert OpenCV image to ROS message
+			
+			//ros::Time time = ros::Time::now();
+			
+			// convert OpenCV image to ROS message
 			image_pub.publish(cv_msg->toImageMsg());
 		}
 		catch (sensor_msgs::CvBridgeException error)
@@ -77,7 +104,7 @@ public:
 		}
 		
 	}
-		
+	
 protected:
 	
 	ros::NodeHandle node;
@@ -85,8 +112,9 @@ protected:
 	image_transport::Subscriber image_sub;
 	//sensor_msgs::CvBridge bridge;
 	image_transport::Publisher image_pub;
+	FrameFilter *filter;
 	
-  bool debug;
+	bool debug;
 };
 
 int main(int argc, char** argv)

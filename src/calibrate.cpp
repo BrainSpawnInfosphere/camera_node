@@ -549,10 +549,10 @@ bool CalibrateNode::findGrid(cv::Mat& view){
          break;
          // need OpenCV 2.3 to use these    
       case CIRCLES_GRID:
-         //found = findCirclesGrid( view, boardSize, pointbuf );
+         found = findCirclesGrid( view, boardSize, pointbuf );
          break;
       case ASYMMETRIC_CIRCLES_GRID:
-         //found = findCirclesGrid( view, boardSize, pointbuf, CALIB_CB_ASYMMETRIC_GRID );
+         found = findCirclesGrid( view, boardSize, pointbuf, CALIB_CB_ASYMMETRIC_GRID );
          break;
       default:
          ROS_ERROR("Unknown pattern type");

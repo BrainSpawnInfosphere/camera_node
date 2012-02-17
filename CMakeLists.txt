@@ -29,15 +29,24 @@ set(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
 #rosbuild_add_executable(example examples/example.cpp)
 #target_link_libraries(example ${PROJECT_NAME})
 
+find_package(OpenCV 2.3.1 REQUIRED)
+if(OpenCV_FOUND)
+	message("======== ${OpenCV_VERSION} Found ========= ")
+endif(OpenCV_FOUND)
 
 rosbuild_add_executable(filter src/filter.cpp )
+target_link_libraries(filter  ${OpenCV_LIBS})
+
+rosbuild_add_executable(disparity_view src/test/disparity_view.cpp )
+target_link_libraries(disparity_view  ${OpenCV_LIBS})
+
+rosbuild_add_executable(opencv_stereo src/test/stereocamera.cpp )
+target_link_libraries(opencv_stereo  ${OpenCV_LIBS})
 
 rosbuild_add_executable(opencv_cam src/opencv_cam.cpp )
+target_link_libraries(opencv_cam  ${OpenCV_LIBS})
 
 rosbuild_add_executable(calibrate src/calibrate.cpp)
-
-#rosbuild_add_executable(hist1 src/hist/histogram.cpp)
-
-#rosbuild_add_executable(hist2 src/hist/hist.cpp)
+target_link_libraries(calibrate  ${OpenCV_LIBS})
 
 

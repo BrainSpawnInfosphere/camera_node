@@ -32,23 +32,22 @@
  *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  *  POSSIBILITY OF SUCH DAMAGE.
  *
- * Author: Kevin J. Walchko on 6/20/2011
+ * Author: Kevin J. Walchko on 10/17/2011
  *********************************************************************
  *
- * Simple camera driver using OpenCV 2.2 interface to grab images.
+ * Simple stereo camera driver using OpenCV interface to grab images.
  *
- * rosrun camera_node opencv_cam _source:=# _size:=#x# _debug:=true/false
+ * rosrun camera_node opencv_stereo _source:=# _size:=#x# _debug:=true/false
  *		where:
  *			source: > 0 selects a camera other than default
  *          size: my MacBook Pro can do 160x120, 320x240, 640x480
  *          fps: my MacBook Pro seems to ignore fps and always gives me ~15 fps
  *
  * Example:
- * rosrun camera_node opencv_cam _debug:=true _size:=160x120 _fps:=30
+ * rosrun camera_node opencv_stereo _debug:=true _size:=160x120 _fps:=30
  *
  * Change Log:
- * 20 June 2011 Created
- *  3 Aug 2011 Major rewrite to use more of the updated methods for E Turtle
+ * 17 Oct 2011 Created, based off uvc_camera stereo driver
  *
  **********************************************************************
  *
@@ -57,38 +56,46 @@
  */
 
 
-#include <ros/ros.h>
-//#include <sensor_msgs/image_encodings.h>
-//#include <sensor_msgs/CameraInfo.h> // depreciated
-//#include <camera_info_manager/camera_info_manager.h>
-//#include <image_transport/image_transport.h> // handles raw or compressed images
-//#include <cv_bridge/cv_bridge.h> // switches between cv and ros image formats 
-//#include <opencv2/opencv.hpp>
-//#include <opencv2/highgui/highgui.hpp>
+#include <boost/thread.hpp>
 
-//#include <iostream>
+#include <ros/ros.h>
+#include <ros/time.h>
 
 #include "CameraNode.h"
+#include "sensor_msgs/Image.h"
+#include "sensor_msgs/image_encodings.h"
+#include "sensor_msgs/CameraInfo.h"
+#include "camera_info_manager/camera_info_manager.h"
+#include "image_transport/image_transport.h"
 
-//using namespace ros;
-//using namespace sensor_msgs;
-//using namespace cv;
-//using namespace cv_bridge;
-
-
-
-/**
- * Still having problems with pass commandline args ... the param server
- * remembers the last params you put on it. You need to kill roscore to 
- * clear the param server.
- */
-int main(int argc, char** argv)
-{
-    ros::init(argc, argv, "opencv_cam");
-    ros::NodeHandle n("~");
+namespace uvc_camera {
+  
+  class StereoCamera {
+  public:
+    StereoCamera(ros::NodeHandle comm_nh, ros::NodeHandle param_nh);
+    void onInit();
+    void sendInfo(ros::Time time);
+    void feedImages();
+    ~StereoCamera();
     
-    CameraNode ic(n);
-    ic.spin();
+  private:
+    ros::NodeHandle node, pnode;
+    image_transport::ImageTransport it;
+    bool ok;
     
-    return 0;
-}
+    CameraNode *cam_left, *cam_right;
+    int width, height, fps, skip_frames, frames_to_skip;
+    int left_device, right_device;
+    std::string frame;
+    bool rotate_left, rotate_right;
+    
+    CameraInfoManager left_info_mgr, right_info_mgr;
+    
+    image_transport::Publisher left_pub, right_pub;
+    ros::Publisher left_info_pub, right_info_pub;
+    
+    boost::thread image_thread;
+  };
+  
+};
+
